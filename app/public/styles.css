@@ -1,0 +1,279 @@
+/* Glance-compatible styling. The colour system (--bgh/--bgs/--bgl/--cm/--tsm
+   /--scheme and everything derived from it) is Glance's own, identical to the
+   bookmarks and reddit widgets, so this inherits the active Glance theme --
+   custom presets and light/dark included -- via the postMessage sync in
+   index.html's <head>. */
+:root {
+  font-size: 10px;
+
+  --scheme: ;
+  --bgh: 240;
+  --bgs: 8%;
+  --bgl: 9%;
+  --bghs: var(--bgh), var(--bgs);
+  --cm: 1;
+  --tsm: 1;
+
+  --border-radius: 5px;
+  --gap: 10px;
+
+  --color-primary: hsl(43, 50%, 70%);
+  --color-positive: hsl(140, 40%, 55%);
+  --color-negative: hsl(0, 70%, 60%);
+  --color-background: hsl(var(--bghs), var(--bgl));
+  --color-widget-background: hsl(var(--bghs), calc(var(--bgl) + 1%));
+  --color-widget-background-highlight: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 4%)));
+  --color-separator: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 8%)));
+
+  --ths: var(--bgh), calc(var(--bgs) * var(--tsm));
+  --color-text-highlight: hsl(var(--ths), calc(var(--scheme) var(--cm) * 85%));
+  --color-text-base: hsl(var(--ths), calc(var(--scheme) var(--cm) * 58%));
+  --color-text-subdue: hsl(var(--ths), calc(var(--scheme) var(--cm) * 35%));
+
+  --font-size-h4: 1.4rem;
+  --font-size-base: 1.35rem;
+  --font-size-h5: 1.2rem;
+  --font-size-h6: 1.1rem;
+
+  /* Score ramp. Debug scores out of 5 and uses the whole scale, so 3/5 is a
+     genuine middle rather than a failure -- hence amber, not red.
+     The ramp goes light-on-dark in Glance's dark schemes and dark-on-light in
+     its light ones, so the ink has to invert with it or the badges go
+     dark-on-dark and stop being readable. */
+  --score-high: hsl(140, 45%, 55%);
+  --score-good: hsl(80, 45%, 55%);
+  --score-mid: hsl(40, 70%, 60%);
+  --score-low: hsl(10, 65%, 58%);
+  --score-ink: #06110a;
+}
+
+:root[data-theme="light"] {
+  --scheme: 100% -;
+  --bgh: 240; --bgs: 13%; --bgl: 95%;
+  --color-primary: hsl(230, 100%, 30%);
+  --color-negative: hsl(0, 70%, 45%);
+  --score-high: hsl(140, 50%, 32%);
+  --score-good: hsl(80, 50%, 28%);
+  --score-mid: hsl(35, 75%, 35%);
+  --score-low: hsl(10, 65%, 42%);
+  --score-ink: #ffffff;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: transparent;
+  color: var(--color-text-base);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: var(--font-size-base);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+.root { padding: 2px 0 6px; }
+.loading, .empty {
+  padding: 24px 4px; text-align: center;
+  color: var(--color-text-subdue); font-size: var(--font-size-h5);
+}
+.error { color: var(--color-negative); }
+
+/* ── Cover shelf ─────────────────────────────────────────────── */
+.shelf-wrap { position: relative; margin-bottom: 14px; }
+.shelf {
+  display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 10px;
+  scrollbar-width: thin; scroll-behavior: smooth;
+}
+.shelf::-webkit-scrollbar { height: 5px; }
+.shelf::-webkit-scrollbar-thumb {
+  background: var(--color-separator); border-radius: 3px;
+}
+
+.cover {
+  position: relative; flex: 0 0 auto; width: 86px;
+  border-radius: 4px; overflow: hidden; cursor: pointer;
+  background: var(--color-widget-background-highlight);
+  border: 1px solid transparent;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.cover:hover { transform: translateY(-2px); }
+.cover.is-active { border-color: var(--color-primary); }
+.cover img { display: block; width: 100%; aspect-ratio: 1240 / 1754; object-fit: cover; }
+.cover-meta {
+  position: absolute; inset: auto 0 0 0; padding: 12px 5px 4px;
+  background: linear-gradient(to top, rgba(0,0,0,.88), rgba(0,0,0,0));
+  color: #fff; font-size: var(--font-size-h6); line-height: 1.25;
+}
+.cover-num { font-weight: 600; }
+.cover-sub { opacity: .75; font-size: 1rem; }
+/* Issues whose contents Debug has not indexed yet: cover exists, nothing to
+   read inside. Dimmed so the shelf does not promise contents it lacks. */
+.cover.is-stub img { opacity: .45; filter: saturate(.6); }
+.cover.is-stub::after {
+  content: "not indexed"; position: absolute; top: 4px; left: 4px;
+  padding: 1px 4px; border-radius: 3px; font-size: .95rem;
+  white-space: nowrap; background: rgba(0,0,0,.7); color: #fff;
+}
+
+/* ── Controls ────────────────────────────────────────────────── */
+.controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.search {
+  flex: 1 1 160px; min-width: 120px; padding: 6px 9px;
+  background: var(--color-widget-background-highlight);
+  border: 1px solid var(--color-separator);
+  border-radius: var(--border-radius);
+  color: var(--color-text-highlight); font-size: var(--font-size-h5);
+}
+.search::placeholder { color: var(--color-text-subdue); }
+.search:focus { outline: none; border-color: var(--color-primary); }
+
+.chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.chip {
+  padding: 4px 9px; border-radius: 99px; font-size: var(--font-size-h6);
+  border: 1px solid var(--color-separator); color: var(--color-text-base);
+  white-space: nowrap; transition: all .12s ease;
+}
+.chip:hover { color: var(--color-text-highlight); }
+.chip.is-on {
+  background: var(--color-primary); border-color: var(--color-primary);
+  color: var(--color-background); font-weight: 600;
+}
+.chip-clear { color: var(--color-text-subdue); border-style: dashed; }
+
+.count { margin-left: auto; font-size: var(--font-size-h6); color: var(--color-text-subdue); }
+
+/* ── Card grid ───────────────────────────────────────────────── */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--gap); }
+
+.card {
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--color-widget-background-highlight);
+  border: 1px solid var(--color-separator);
+  border-radius: var(--border-radius);
+  cursor: pointer; text-align: left;
+  transition: border-color .12s ease, transform .12s ease;
+}
+.card:hover { border-color: var(--color-primary); transform: translateY(-1px); }
+
+.card-art { position: relative; aspect-ratio: 460 / 215; background: var(--color-widget-background); overflow: hidden; }
+.card-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Fallback when Steam has no match: the issue cover, cropped to the same
+   band so the grid keeps one rhythm. */
+.card-art.is-fallback img { object-fit: cover; object-position: center 22%; filter: blur(1px) saturate(.75); opacity: .55; }
+.card-art.is-fallback .card-fallback-title {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 6px 10px; text-align: center; font-size: var(--font-size-h5); font-weight: 600;
+  color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.9);
+}
+
+.badge {
+  position: absolute; top: 6px; right: 6px; padding: 2px 7px;
+  border-radius: 99px; font-size: var(--font-size-h6); font-weight: 700;
+  color: var(--score-ink); background: var(--score-mid);
+  box-shadow: 0 1px 4px rgba(0,0,0,.45);
+}
+.badge.s-high { background: var(--score-high); }
+.badge.s-good { background: var(--score-good); }
+.badge.s-mid  { background: var(--score-mid); }
+.badge.s-low  { background: var(--score-low); color: #fff; }
+
+.kind {
+  position: absolute; top: 6px; left: 6px; padding: 2px 7px;
+  border-radius: 99px; font-size: .95rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em;
+  background: rgba(0,0,0,.65); color: #fff;
+}
+
+.card-body { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 3px; }
+.card-title {
+  color: var(--color-text-highlight); font-size: var(--font-size-h4);
+  font-weight: 600; line-height: 1.25;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-studio {
+  font-size: var(--font-size-h6); color: var(--color-text-subdue);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-summary {
+  margin-top: 3px; font-size: var(--font-size-h5); color: var(--color-text-base);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-foot {
+  margin-top: 5px; display: flex; gap: 6px; align-items: center;
+  font-size: var(--font-size-h6); color: var(--color-text-subdue);
+}
+.dot { opacity: .5; }
+
+/* ── Detail panel ────────────────────────────────────────────── */
+.detail { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.detail[hidden] { display: none; }
+.detail-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.72); }
+.detail-panel {
+  position: relative; width: min(560px, 100%); max-height: 88vh; overflow-y: auto;
+  background: var(--color-background); border: 1px solid var(--color-separator);
+  border-radius: 8px; box-shadow: 0 16px 50px rgba(0,0,0,.5);
+}
+.detail-close {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  font-size: 1.8rem; line-height: 1; color: #fff; opacity: .85;
+  background: rgba(0,0,0,.55);
+}
+.detail-close:hover { opacity: 1; background: rgba(0,0,0,.75); }
+.detail-hero { position: relative; aspect-ratio: 460 / 215; max-height: 240px; overflow: hidden; background: var(--color-widget-background-highlight); }
+.detail-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.detail-content { padding: 14px 16px 16px; }
+.detail-title { font-size: 2rem; font-weight: 700; color: var(--color-text-highlight); line-height: 1.2; }
+.detail-sub { margin-top: 3px; font-size: var(--font-size-h5); color: var(--color-text-subdue); }
+.detail-score { display: inline-block; margin: 10px 0 0; padding: 3px 10px; border-radius: 99px; font-weight: 700; color: var(--score-ink); }
+.detail-summary { margin-top: 12px; font-size: var(--font-size-h4); line-height: 1.55; color: var(--color-text-base); }
+.detail-note { margin-top: 10px; font-size: var(--font-size-h5); color: var(--color-text-subdue); font-style: italic; }
+.detail-rows { margin-top: 14px; display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; font-size: var(--font-size-h5); }
+.detail-rows dt { color: var(--color-text-subdue); }
+.detail-rows dd { margin: 0; color: var(--color-text-highlight); }
+.detail-links { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  padding: 6px 12px; border-radius: var(--border-radius);
+  background: var(--color-widget-background-highlight);
+  border: 1px solid var(--color-separator);
+  color: var(--color-text-highlight); font-size: var(--font-size-h5);
+}
+.btn:hover { border-color: var(--color-primary); }
+.btn-primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-background); font-weight: 600; }
+
+/* ── Compact mode ────────────────────────────────────────────── */
+/* The dashboard column is ~460px tall. Show the shelf and a ranked list, and
+   send anything that needs room to the full page in a new tab. */
+body.compact .controls, body.compact .grid { display: none; }
+body.compact .shelf-wrap { margin-bottom: 10px; }
+/* Wide enough that the "not indexed" badge stays on one line. */
+body.compact .cover { width: 72px; }
+body.compact .cover.is-stub::after { font-size: .8rem; padding: 1px 3px; }
+
+.c-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 7px; }
+.c-title { font-size: var(--font-size-h4); font-weight: 600; color: var(--color-text-highlight); }
+.c-sub { font-size: var(--font-size-h6); color: var(--color-text-subdue); }
+.c-more { margin-left: auto; font-size: var(--font-size-h6); color: var(--color-primary); }
+
+.c-list { display: flex; flex-direction: column; }
+.c-row {
+  display: flex; align-items: center; gap: 9px; padding: 5px 4px;
+  border-radius: 4px; width: 100%; text-align: left;
+}
+.c-row:hover { background: var(--color-widget-background-highlight); }
+.c-score {
+  flex: 0 0 auto; width: 30px; text-align: center; padding: 1px 0;
+  border-radius: 3px; font-size: var(--font-size-h6); font-weight: 700; color: var(--score-ink);
+}
+.c-name {
+  flex: 1 1 auto; min-width: 0; color: var(--color-text-highlight);
+  font-size: var(--font-size-h5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.c-studio { flex: 0 0 auto; font-size: var(--font-size-h6); color: var(--color-text-subdue); max-width: 40%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-thumb { flex: 0 0 auto; width: 38px; aspect-ratio: 460/215; border-radius: 3px; object-fit: cover; background: var(--color-widget-background); }
+
+.stale { margin-top: 8px; font-size: var(--font-size-h6); color: var(--color-text-subdue); text-align: center; }

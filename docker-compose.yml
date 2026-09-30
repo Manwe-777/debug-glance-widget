@@ -1,0 +1,17 @@
+services:
+  debug-widget:
+    build: .
+    container_name: debug-glance-widget
+    restart: unless-stopped
+    # Match the host user so ./cache (uid 1000) stays writable.
+    user: "1000:1000"
+    ports:
+      # 8091 is the reddit widget; this keeps the Glance widgets adjacent.
+      - "${WIDGET_PORT:-8092}:8080"
+    volumes:
+      - ./cache:/data
+    environment:
+      # All optional -- the Debug feeds need no credentials.
+      REFRESH_HOURS: "${REFRESH_HOURS:-12}"
+      STEAM_ENABLED: "${STEAM_ENABLED:-1}"
+      STEAM_DELAY: "${STEAM_DELAY:-1.2}"

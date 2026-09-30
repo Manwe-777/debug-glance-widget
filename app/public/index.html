@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Apply the cached Glance theme before first paint, so the widget never
+    // flashes the wrong scheme. Glance's glance-theme-broadcast.js posts the
+    // active theme to every iframe; same contract as the bookmarks and
+    // reddit widgets.
+    (function () {
+      var KEY = 'glanceThemeCache';
+      var vars = ['bgh', 'bgs', 'bgl', 'cm', 'tsm'];
+      var colors = ['primary', 'positive', 'negative'];
+
+      function apply(gt) {
+        var r = document.documentElement.style;
+        if (gt.scheme === 'light') {
+          r.setProperty('--scheme', '100% -');
+          document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+          r.setProperty('--scheme', ' ');
+          document.documentElement.removeAttribute('data-theme');
+        }
+        vars.forEach(function (k) { if (gt[k]) r.setProperty('--' + k, gt[k]); });
+        colors.forEach(function (k) { if (gt[k]) r.setProperty('--color-' + k, gt[k]); });
+      }
+
+      try {
+        var cached = JSON.parse(localStorage.getItem(KEY));
+        if (cached) apply(cached);
+      } catch (e) {}
+
+      window.addEventListener('message', function (e) {
+        if (e.data && e.data.glanceTheme) {
+          apply(e.data.glanceTheme);
+          try { localStorage.setItem(KEY, JSON.stringify(e.data.glanceTheme)); } catch (e2) {}
+        }
+      });
+    })();
+  </script>
+</head>
+<body>
+  <div id="root" class="root">
+    <div id="loading" class="loading">Loading Debug…</div>
+  </div>
+
+  <!-- Detail panel. Full mode opens it in place; compact mode has no room,
+       so a card there opens the full page at the same item instead. -->
+  <div id="detail" class="detail" hidden>
+    <div class="detail-backdrop" data-close></div>
+    <div class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="d-title">
+      <button class="detail-close" data-close aria-label="Close">&times;</button>
+      <div class="detail-body"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
