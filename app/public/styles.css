@@ -22,8 +22,8 @@
   --color-negative: hsl(0, 70%, 60%);
   --color-background: hsl(var(--bghs), var(--bgl));
   --color-widget-background: hsl(var(--bghs), calc(var(--bgl) + 1%));
+  --color-widget-content-border: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 4%)));
   --color-widget-background-highlight: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 4%)));
-  --color-separator: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 8%)));
 
   --ths: var(--bgh), calc(var(--bgs) * var(--tsm));
   --color-text-highlight: hsl(var(--ths), calc(var(--scheme) var(--cm) * 85%));
@@ -51,7 +51,7 @@
   --scheme: 100% -;
   --bgh: 240; --bgs: 13%; --bgl: 95%;
   --color-primary: hsl(230, 100%, 30%);
-  --color-negative: hsl(0, 70%, 45%);
+  --color-negative: hsl(0, 70%, 50%);
   --score-high: hsl(140, 50%, 32%);
   --score-good: hsl(80, 50%, 28%);
   --score-mid: hsl(35, 75%, 35%);
@@ -61,9 +61,12 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+html, body {
+  background: var(--color-widget-background);
+}
+
 body {
   margin: 0;
-  background: transparent;
   color: var(--color-text-base);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: var(--font-size-base);
@@ -81,15 +84,38 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .error { color: var(--color-negative); }
 
+/* ── Scrollbars ──────────────────────────────────────────────── */
+html, .shelf, .detail-panel, .detail-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-widget-content-border) transparent;
+}
+html::-webkit-scrollbar,
+.detail-panel::-webkit-scrollbar,
+.detail-body::-webkit-scrollbar { width: 6px; }
+.shelf::-webkit-scrollbar { height: 5px; }
+html::-webkit-scrollbar-track,
+.shelf::-webkit-scrollbar-track,
+.detail-panel::-webkit-scrollbar-track,
+.detail-body::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb,
+.shelf::-webkit-scrollbar-thumb,
+.detail-panel::-webkit-scrollbar-thumb,
+.detail-body::-webkit-scrollbar-thumb {
+  background: var(--color-widget-content-border);
+  border-radius: 3px;
+}
+html::-webkit-scrollbar-thumb:hover,
+.shelf::-webkit-scrollbar-thumb:hover,
+.detail-panel::-webkit-scrollbar-thumb:hover,
+.detail-body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-subdue);
+}
+
 /* ── Cover shelf ─────────────────────────────────────────────── */
 .shelf-wrap { position: relative; margin-bottom: 14px; }
 .shelf {
   display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 10px;
-  scrollbar-width: thin; scroll-behavior: smooth;
-}
-.shelf::-webkit-scrollbar { height: 5px; }
-.shelf::-webkit-scrollbar-thumb {
-  background: var(--color-separator); border-radius: 3px;
+  scroll-behavior: smooth;
 }
 
 .cover {
@@ -123,7 +149,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .search {
   flex: 1 1 160px; min-width: 120px; padding: 6px 9px;
   background: var(--color-widget-background-highlight);
-  border: 1px solid var(--color-separator);
+  border: 1px solid var(--color-widget-content-border);
   border-radius: var(--border-radius);
   color: var(--color-text-highlight); font-size: var(--font-size-h5);
 }
@@ -133,7 +159,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .chips { display: flex; gap: 5px; flex-wrap: wrap; }
 .chip {
   padding: 4px 9px; border-radius: 99px; font-size: var(--font-size-h6);
-  border: 1px solid var(--color-separator); color: var(--color-text-base);
+  border: 1px solid var(--color-widget-content-border); color: var(--color-text-base);
   white-space: nowrap; transition: all .12s ease;
 }
 .chip:hover { color: var(--color-text-highlight); }
@@ -151,7 +177,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .card {
   display: flex; flex-direction: column; overflow: hidden;
   background: var(--color-widget-background-highlight);
-  border: 1px solid var(--color-separator);
+  border: 1px solid var(--color-widget-content-border);
   border-radius: var(--border-radius);
   cursor: pointer; text-align: left;
   transition: border-color .12s ease, transform .12s ease;
@@ -213,7 +239,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .detail-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.72); }
 .detail-panel {
   position: relative; width: min(560px, 100%); max-height: 88vh; overflow-y: auto;
-  background: var(--color-background); border: 1px solid var(--color-separator);
+  background: var(--color-background); border: 1px solid var(--color-widget-content-border);
   border-radius: 8px; box-shadow: 0 16px 50px rgba(0,0,0,.5);
 }
 .detail-close {
@@ -239,7 +265,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .btn {
   padding: 6px 12px; border-radius: var(--border-radius);
   background: var(--color-widget-background-highlight);
-  border: 1px solid var(--color-separator);
+  border: 1px solid var(--color-widget-content-border);
   color: var(--color-text-highlight); font-size: var(--font-size-h5);
 }
 .btn:hover { border-color: var(--color-primary); }
